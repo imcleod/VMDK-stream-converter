@@ -1,0 +1,18 @@
+While adding support for VMWare ESX/vSphere to the Image Factory project
+we discovered that we needed to support the "stream-optimized" variant
+of VMDK.
+
+This module is a first draft attempt to do so.
+
+It is known to work on ESXi 4.1.
+
+This format is only useful if you are attempting to import virtual machines
+into ESX using the vSphere SOAP API and HTTP POST uploads of image files.
+(In which case, it is required.)
+
+More details about the Image Factory and the rest of the aeolus project
+can be found here:
+
+http://www.aeolusproject.org/
+
+-Ian McLeod <imcleod@redhat.com>
