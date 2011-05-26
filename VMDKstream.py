@@ -257,8 +257,11 @@ def convert_to_stream(infilename, outfilename):
                 # function does zero check so we don't have to
                 grainDirectory.append(table_location)
                 currentGrainTable = [ ]
+            # do not update pointer unless we read a full grain last time
+            # incomplete grain read indicates EOF and may result in non-sector alignment
+            if len(inChunk) == grainSize:
+                inputSectorPointer = sector_pointer(infile)
             # read the next chunk
-            inputSectorPointer = sector_pointer(infile)
             inChunk = infile.read(grainSize)
     finally:
         # Write out the final grain table if needed
