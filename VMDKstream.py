@@ -244,7 +244,6 @@ def convert_to_stream(infilename, outfilename):
         inputSectorPointer = sector_pointer(infile)
         inChunk = infile.read(grainSize)
         while inChunk != "":
-            #debug_print("Processing chunk starting at (%d)" % (inputSectorPointer) )
             if inChunk == zeroChunk:
                 # All zeros - no need to create a grain - just mark zero in GTE
                 currentGrainTable.append(0)
