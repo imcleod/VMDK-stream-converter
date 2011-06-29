@@ -114,11 +114,10 @@ def create_marker(numSectors = None, size = None, marker_type = None):
     marker_struct = "=QII496B"
     return struct.pack(marker_struct, *marker_list)
 
-def create_grain_marker(location = None, size = None):
+def create_grain_marker(location, size):
     # The grain marker is special in that the data follows immediately after it
     # without a pad
-    grain_marker_struct = "=QI"
-    return struct.pack(grain_marker_struct, location, size)
+    return struct.pack("=QI", location, size)
 
 def divro(num, den):
     # Divide always rounding up and returning an integer
