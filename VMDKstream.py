@@ -2,16 +2,16 @@
 # encoding: utf-8
 
 # Copyright (C) 2011 Red Hat, Inc.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; version 2 of the License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
@@ -19,7 +19,7 @@
 # also available at http://www.gnu.org/copyleft/gpl.html.
 #
 # First cut module to convert raw disk images into stream-optimized VMDK files
-# 
+#
 # See the "Specification Document" referenced in Wikipedia for more details:
 #
 # http://en.wikipedia.org/wiki/VMDK
@@ -56,17 +56,17 @@ SECTOR_SIZE = 512
 
 # Descriptor Template
 image_descriptor_template='''# Description file created by VMDK stream converter
-version=1 
+version=1
 # Believe this is random
-CID=7e5b80a7 
+CID=7e5b80a7
 # Indicates no parent
-parentCID=ffffffff 
-createType="streamOptimized" 
+parentCID=ffffffff
+createType="streamOptimized"
 
 # Extent description
 RDONLY #SECTORS# SPARSE "call-me-stream.vmdk"
 
-# The Disk Data Base 
+# The Disk Data Base
 #DDB
 
 ddb.adapterType = "lsilogic"
@@ -80,7 +80,7 @@ ddb.virtualHWVersion = "7"'''
 
 
 def create_sparse_header(inFileSectors = None, descriptorOffset = 1 ,
-			  descriptorSize = None, gdOffset = 0xFFFFFFFFFFFFFFFF ):  
+			  descriptorSize = None, gdOffset = 0xFFFFFFFFFFFFFFFF ):
     # While theoretically variable we set these based on current VMWare convention
     grainSize = 128
     numGTEsPerGT = 512
@@ -90,21 +90,21 @@ def create_sparse_header(inFileSectors = None, descriptorOffset = 1 ,
     # The following are always fixed in the "stream-optimized" format we are creating
     compressAlgorithm = 1
     flags = 0x30001
-    rgdOffset = 0 
+    rgdOffset = 0
 
     # We are building from scratch so an unclean shutdown is not possible
     uncleanShutdown = 0
 
     # Build the struct
     header_list = [ MAGIC_NUMBER, formatVersion, flags, inFileSectors, grainSize, descriptorOffset, descriptorSize,
-		    numGTEsPerGT, rgdOffset, gdOffset, overHead, uncleanShutdown, '\n', ' ', '\r', '\n', 
+		    numGTEsPerGT, rgdOffset, gdOffset, overHead, uncleanShutdown, '\n', ' ', '\r', '\n',
 		    compressAlgorithm ]
     for i in range(433):
 	header_list.append(0)
     header_struct = "=IIIQQQQIQQQBccccH433B"
-    return struct.pack(header_struct, *header_list)     
+    return struct.pack(header_struct, *header_list)
 
-def create_marker(numSectors = None, size = None, marker_type = None): 
+def create_marker(numSectors = None, size = None, marker_type = None):
     marker_list = [ numSectors, size, marker_type ]
     for i in range(496):
 	marker_list.append(0)
@@ -113,8 +113,8 @@ def create_marker(numSectors = None, size = None, marker_type = None):
 
 def create_grain_marker(location = None, size = None):
     # The grain marker is special in that the data follows immediately after it
-    # without a pad 
-    grain_marker_struct = "=QI"   
+    # without a pad
+    grain_marker_struct = "=QI"
     return struct.pack(grain_marker_struct, location, size)
 
 def divro(num, den):
@@ -141,7 +141,7 @@ def sector_pointer(file_object):
     if file_location % SECTOR_SIZE:
         raise VMDKStreamException("Asked for a sector pointer on a file whose r/w pointer is not sector aligned")
     else:
-        return file_location / SECTOR_SIZE    
+        return file_location / SECTOR_SIZE
 
 
 def write_grain_table(outfile, grain_table, gtes_per_gt = 512):
@@ -204,7 +204,7 @@ def convert_to_stream(infilename, outfilename):
     debug_print("DEBUG: Descriptor takes up (%s) sectors" % desc_sectors )
     image_descriptor += image_descriptor_pad
 
-    image_header = create_sparse_header(inFileSectors = infileSectors, descriptorSize = desc_sectors) 
+    image_header = create_sparse_header(inFileSectors = infileSectors, descriptorSize = desc_sectors)
 
     outfile = open(outfilename, "wb")
     outfile.write(image_header)
@@ -245,7 +245,7 @@ def convert_to_stream(infilename, outfilename):
                 # Create a compressed grain
                 currentGrainTable.append(sector_pointer(outfile))
 		compChunk = zlib.compress(inChunk)
-                grain_marker = create_grain_marker(inputSectorPointer, len(compChunk))    
+                grain_marker = create_grain_marker(inputSectorPointer, len(compChunk))
 		grainPad, writeSectors = pad_to_sector(len(compChunk) + len(grain_marker))
 		outfile.write(grain_marker)
 		outfile.write(compChunk)
@@ -284,8 +284,8 @@ def convert_to_stream(infilename, outfilename):
         debug_print("Grain directory length (%d)" % (len(grainDirectory)) )
         debug_print("Grain directory: ")
         debug_print(grainDirectory)
-        outfile.write(struct.pack(grainDirectoryStruct, *grainDirectory)) 
-        
+        outfile.write(struct.pack(grainDirectoryStruct, *grainDirectory))
+
         # footer marker
         outfile.write(create_marker(1,0,MARKER_FOOTER))
 
