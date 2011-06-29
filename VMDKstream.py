@@ -109,7 +109,7 @@ def create_sparse_header(inFileSectors, descriptorSize,
     header_struct = "=IIIQQQQIQQQBccccH433B"
     return struct.pack(header_struct, *header_list)
 
-def create_marker(numSectors = None, size = None, marker_type = None):
+def create_marker(numSectors, size, marker_type):
     marker_list = [ numSectors, size, marker_type ]
     for i in range(496):
 	marker_list.append(0)
