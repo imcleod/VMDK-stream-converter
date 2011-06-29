@@ -79,14 +79,16 @@ ddb.longContentID = "8f15b3d0009d9a3f456ff7b28d324d2a"
 ddb.virtualHWVersion = "7"'''
 
 
-def create_sparse_header(inFileSectors = None, descriptorOffset = 1,
-                         descriptorSize = None, gdOffset = 0xFFFFFFFFFFFFFFFF):
+def create_sparse_header(inFileSectors, descriptorSize,
+                         gdOffset = 0xFFFFFFFFFFFFFFFF):
     # While theoretically variable we set these based on current VMWare
     # convention
     grainSize = 128
     numGTEsPerGT = 512
     overHead = 128
     formatVersion = 3 # NOTE: Conflicts with VMWare docs - determined by trial/error
+
+    descriptorOffset = 1
 
     # The following are always fixed in the "stream-optimized" format we are
     # creating
