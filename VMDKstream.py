@@ -79,15 +79,17 @@ ddb.longContentID = "8f15b3d0009d9a3f456ff7b28d324d2a"
 ddb.virtualHWVersion = "7"'''
 
 
-def create_sparse_header(inFileSectors = None, descriptorOffset = 1 ,
-			  descriptorSize = None, gdOffset = 0xFFFFFFFFFFFFFFFF ):
-    # While theoretically variable we set these based on current VMWare convention
+def create_sparse_header(inFileSectors = None, descriptorOffset = 1,
+                         descriptorSize = None, gdOffset = 0xFFFFFFFFFFFFFFFF):
+    # While theoretically variable we set these based on current VMWare
+    # convention
     grainSize = 128
     numGTEsPerGT = 512
     overHead = 128
     formatVersion = 3 # NOTE: Conflicts with VMWare docs - determined by trial/error
 
-    # The following are always fixed in the "stream-optimized" format we are creating
+    # The following are always fixed in the "stream-optimized" format we are
+    # creating
     compressAlgorithm = 1
     flags = 0x30001
     rgdOffset = 0
@@ -96,9 +98,10 @@ def create_sparse_header(inFileSectors = None, descriptorOffset = 1 ,
     uncleanShutdown = 0
 
     # Build the struct
-    header_list = [ MAGIC_NUMBER, formatVersion, flags, inFileSectors, grainSize, descriptorOffset, descriptorSize,
-		    numGTEsPerGT, rgdOffset, gdOffset, overHead, uncleanShutdown, '\n', ' ', '\r', '\n',
-		    compressAlgorithm ]
+    header_list = [ MAGIC_NUMBER, formatVersion, flags, inFileSectors,
+                    grainSize, descriptorOffset, descriptorSize, numGTEsPerGT,
+                    rgdOffset, gdOffset, overHead, uncleanShutdown,
+                    '\n', ' ', '\r', '\n', compressAlgorithm ]
     for i in range(433):
 	header_list.append(0)
     header_struct = "=IIIQQQQIQQQBccccH433B"
@@ -156,7 +159,8 @@ def write_grain_table(outfile, grain_table, gtes_per_gt = 512):
         # We don't need to write this and can put zeros in the directory
         return 0
     else:
-        grain_table_marker = create_marker(numSectors = (gtes_per_gt * 4) / SECTOR_SIZE, size = 0, marker_type = MARKER_GT)
+        grain_table_marker = create_marker(numSectors = (gtes_per_gt * 4) / SECTOR_SIZE,
+                                           size = 0, marker_type = MARKER_GT)
         outfile.write(grain_table_marker)
         table_location = sector_pointer(outfile)
         outfile.write(struct.pack("%dI" % gtes_per_gt, *grain_table))
@@ -167,31 +171,31 @@ def debug_print(message):
     pass
 
 def convert_to_stream(infilename, outfilename):
-    debug_print("DEBUG: opening %s to write to %s" % (infilename, outfilename) )
+    debug_print("DEBUG: opening %s to write to %s" % (infilename, outfilename))
 
     infileSize = os.path.getsize(infilename)
-    infileSectors = divro(infileSize,512)
-    debug_print("DEBUG: input file is (%s) bytes - (%s) sectors long" % (infileSize, infileSectors) )
+    infileSectors = divro(infileSize, 512)
+    debug_print("DEBUG: input file is (%s) bytes - (%s) sectors long" % (infileSize, infileSectors))
 
     # Fixed by convention
     # TODO: Make variable here and in header fuction
     grainSectors=128
-    totalGrains=divro(infileSectors,grainSectors)
-    debug_print("DEBUG: total grains will be (%s)" % (totalGrains) )
+    totalGrains=divro(infileSectors, grainSectors)
+    debug_print("DEBUG: total grains will be (%s)" % (totalGrains))
 
     # Fixed by convention
     # TODO: Make variable here and in header fuction
     numGTEsPerGT = 512
     totalGrainTables=divro(totalGrains, numGTEsPerGT)
-    debug_print("DEBUG: total Grain Tables needed will be (%s)" % (totalGrainTables) )
+    debug_print("DEBUG: total Grain Tables needed will be (%s)" % (totalGrainTables))
 
     grainDirectorySectors=divro(totalGrainTables*4, SECTOR_SIZE)
-    debug_print("DEBUG: sectors in Grain Directory will be (%s)" % (grainDirectorySectors) )
+    debug_print("DEBUG: sectors in Grain Directory will be (%s)" % (grainDirectorySectors))
 
     grainDirectoryEntries=grainDirectorySectors*128
-    debug_print("DEBUG: Number of entries in Grain Directory - (%s)" % (grainDirectoryEntries) )
+    debug_print("DEBUG: Number of entries in Grain Directory - (%s)" % (grainDirectoryEntries))
 
-    infileCylinders=divro(infileSectors,(63*255))
+    infileCylinders=divro(infileSectors, (63*255))
     debug_print("DEBUG: Cylinders (%s)" % infileCylinders)
 
     # Populate descriptor
@@ -201,10 +205,11 @@ def convert_to_stream(infilename, outfilename):
     image_descriptor = tmpl
 
     image_descriptor_pad, desc_sectors = pad_to_sector(len(image_descriptor))
-    debug_print("DEBUG: Descriptor takes up (%s) sectors" % desc_sectors )
+    debug_print("DEBUG: Descriptor takes up (%s) sectors" % desc_sectors)
     image_descriptor += image_descriptor_pad
 
-    image_header = create_sparse_header(inFileSectors = infileSectors, descriptorSize = desc_sectors)
+    image_header = create_sparse_header(inFileSectors = infileSectors,
+                                        descriptorSize = desc_sectors)
 
     outfile = open(outfilename, "wb")
     outfile.write(image_header)
@@ -215,13 +220,15 @@ def convert_to_stream(infilename, outfilename):
     overHead = 128
 
     # Pad the output file to fill the overHead
-    for i in range( (overHead-sector_pointer(outfile)) * SECTOR_SIZE ):
+    for i in range((overHead-sector_pointer(outfile)) * SECTOR_SIZE):
         outfile.write('\0')
 
-    # grainDirectory - list of integers representing the global level 0 grain directory
+    # grainDirectory - list of integers representing the global level 0 grain
+    # directory
     grainDirectory = [ ]
 
-    # currentGrainTable - list that can grow to numGTEsPerGT integers representing the active grain table
+    # currentGrainTable - list that can grow to numGTEsPerGT integers
+    # representing the active grain table
     currentGrainTable = [ ]
 
     # For slightly more efficient comparison
@@ -245,7 +252,8 @@ def convert_to_stream(infilename, outfilename):
                 # Create a compressed grain
                 currentGrainTable.append(sector_pointer(outfile))
 		compChunk = zlib.compress(inChunk)
-                grain_marker = create_grain_marker(inputSectorPointer, len(compChunk))
+                grain_marker = create_grain_marker(inputSectorPointer,
+                                                   len(compChunk))
 		grainPad, writeSectors = pad_to_sector(len(compChunk) + len(grain_marker))
 		outfile.write(grain_marker)
 		outfile.write(compChunk)
@@ -253,12 +261,14 @@ def convert_to_stream(infilename, outfilename):
 
             if len(currentGrainTable) == numGTEsPerGT:
                 # Table is full
-                table_location =  write_grain_table(outfile, currentGrainTable, gtes_per_gt = numGTEsPerGT)
+                table_location =  write_grain_table(outfile, currentGrainTable,
+                                                    gtes_per_gt = numGTEsPerGT)
                 # function does zero check so we don't have to
                 grainDirectory.append(table_location)
                 currentGrainTable = [ ]
             # do not update pointer unless we read a full grain last time
-            # incomplete grain read indicates EOF and may result in non-sector alignment
+            # incomplete grain read indicates EOF and may result in non-sector
+            # alignment
             if len(inChunk) == grainSize:
                 inputSectorPointer = sector_pointer(infile)
             # read the next chunk
@@ -269,7 +279,8 @@ def convert_to_stream(infilename, outfilename):
             debug_print("Partial grain table present - padding and adding it to dir")
             for i in range(numGTEsPerGT-len(currentGrainTable)):
                 currentGrainTable.append(0)
-            table_location = write_grain_table(outfile, currentGrainTable, gtes_per_gt = numGTEsPerGT)
+            table_location = write_grain_table(outfile, currentGrainTable,
+                                               gtes_per_gt = numGTEsPerGT)
             grainDirectory.append(table_location)
         else:
             debug_print("Current grain table is empty so we need not write it out")
@@ -277,24 +288,27 @@ def convert_to_stream(infilename, outfilename):
         # pad out grain directory then write it
         for i in range(grainDirectoryEntries - totalGrainTables):
             grainDirectory.append(0)
-        grain_directory_marker = create_marker(grainDirectorySectors, 0, MARKER_GD)
+        grain_directory_marker = create_marker(grainDirectorySectors, 0,
+                                               MARKER_GD)
         outfile.write(grain_directory_marker)
         gdLocation = sector_pointer(outfile)
         grainDirectoryStruct = "%dI" % grainDirectoryEntries
-        debug_print("Grain directory length (%d)" % (len(grainDirectory)) )
+        debug_print("Grain directory length (%d)" % (len(grainDirectory)))
         debug_print("Grain directory: ")
         debug_print(grainDirectory)
         outfile.write(struct.pack(grainDirectoryStruct, *grainDirectory))
 
         # footer marker
-        outfile.write(create_marker(1,0,MARKER_FOOTER))
+        outfile.write(create_marker(1, 0, MARKER_FOOTER))
 
         # footer
-        footer = create_sparse_header(inFileSectors = infileSectors, descriptorSize = desc_sectors, gdOffset = gdLocation)
+        footer = create_sparse_header(inFileSectors = infileSectors,
+                                      descriptorSize = desc_sectors,
+                                      gdOffset = gdLocation)
         outfile.write(footer)
 
         # EOS marker
-        outfile.write(create_marker(0,0,MARKER_EOS))
+        outfile.write(create_marker(0, 0, MARKER_EOS))
         outfile.close()
         infile.close()
 
