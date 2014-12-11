@@ -55,7 +55,8 @@ MARKER_FOOTER = 3 # footer (repeat of header with final info)
 SECTOR_SIZE = 512
 
 # Descriptor Template
-image_descriptor_template='''# Description file created by VMDK stream converter
+image_descriptor_template='''# Disk Descriptor File
+# Created by VMDKstream
 version=1
 # Believe this is random
 CID=7e5b80a7
