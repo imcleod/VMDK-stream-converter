@@ -80,6 +80,25 @@ ddb.longContentID = "8f15b3d0009d9a3f456ff7b28d324d2a"
 ddb.virtualHWVersion = "7"'''
 
 
+def read_sparse_header(infile):
+    #header_struct = "=IIIQQQQIQQQBccccH433B"
+    header_struct = "=IIIQQQQIQQQBccccH"
+    f = open(infile)
+    header = f.read(79)
+    decoded = struct.unpack(header_struct, header)
+    # The values in this decode are:
+    # ( MAGIC_NUMBER, formatVersion, flags, inFileSectors,
+    #   grainSize, descriptorOffset, descriptorSize, numGTEsPerGT,
+    #   rgdOffset, gdOffset, overHead, uncleanShutdown,
+    #   'n', ' ', 'r', 'n', compressAlgorithm )"""
+    f.close()
+    return decoded
+
+def vmdk_disk_size_bytes(infile):
+    decoded = read_sparse_header(infile)
+    # Size in the header is in position 4 in units of 512 byte sectors
+    return decoded[3] * 512
+
 def create_sparse_header(inFileSectors, descriptorSize,
                          gdOffset = 0xFFFFFFFFFFFFFFFF):
     # While theoretically variable we set these based on current VMWare
