@@ -76,7 +76,7 @@ ddb.geometry.heads = "255"
 ddb.geometry.sectors = "63"
 # Believe this is random
 ddb.longContentID = "8f15b3d0009d9a3f456ff7b28d324d2a"
-ddb.virtualHWVersion = "7"'''
+ddb.virtualHWVersion = "11"'''
 
 
 def create_sparse_header(inFileSectors, descriptorSize,
